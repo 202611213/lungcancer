@@ -1,1 +1,1 @@
-fonts_nanum
+fonts-nanum
