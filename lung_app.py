@@ -13,17 +13,14 @@ def set_korean_font():
     elif system_name == 'Darwin':
         rc('font', family='AppleGothic')
     else:
-        # Streamlit Cloud(Linux) 환경: packages.txt에 fonts-nanum을 추가했을 경우
+        # Streamlit Cloud(Linux) 환경: packages.txt에 fonts-nanum 필수
         try:
-            # 나눔고딕 폰트 경로를 직접 찾아 설정합니다.
             font_path = '/usr/share/fonts/truetype/nanum/NanumGothic.ttf'
             font_prop = font_manager.FontProperties(fname=font_path)
             rc('font', family=font_prop.get_name())
         except:
-            # 폰트 경로가 다를 경우를 대비한 대체 설정
             rc('font', family='NanumGothic')
-            
-    plt.rcParams['axes.unicode_minus'] = False # 마이너스 기호 깨짐 방지
+    plt.rcParams['axes.unicode_minus'] = False
 
 set_korean_font()
 
@@ -51,13 +48,13 @@ smoke = st.sidebar.number_input("흡연량(Smokes) 입력", min_value=0.0, value
 drink = st.sidebar.number_input("음주량(Alkhol) 입력", min_value=0.0, value=0.0, step=0.1)
 area = st.sidebar.number_input("지역지수(AreaQ) 입력", min_value=0.0, value=0.0, step=0.1)
 
-# --- 분석 실행 ---
+# --- 분석 실행 섹션 ---
 if st.sidebar.button("결과 분석하기"):
     # 1. 신규 환자 데이터 생성
     new_patient = pd.DataFrame([[smoke, drink, area]], 
                                columns=['Smokes', 'Alkhol', 'AreaQ'])
 
-    # 2. 전처리 및 예측 (.values 사용으로 이름표 에러 방지)
+    # 2. 전처리 및 예측
     new_patient_scaled = scaler.transform(new_patient.values)
     pred_cluster = model.predict(new_patient_scaled)
 
@@ -73,28 +70,28 @@ if st.sidebar.button("결과 분석하기"):
         # 기존 데이터 산점도
         scatter = ax.scatter(df['Smokes'], df['Alkhol'], c=df['Result'], alpha=0.4, cmap='viridis')
         
-        # 입력 환자 위치 (빨간 X) - 범례에 '입력 환자'라고 표시
+        # 입력 환자 위치 (빨간 X)
         ax.scatter(smoke, drink, c='red', s=300, marker='X', edgecolors='white', label='입력 환자 위치')
         
-        # 한글 레이블 및 제목
+        # 한글 레이블 설정
         ax.set_xlabel('흡연량 (Smokes)')
         ax.set_ylabel('음주량 (Alkhol)')
         ax.set_title('환자 군집 분포 및 현재 위치')
         
-        # 범례 설정 (그래프 안쪽 비어있는 곳에 자동 배치)
-        ax.legend(loc='best')
+        # 범례를 그래프 밖으로 빼서 겹침 방지
+        ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1))
         
         # 컬러바 설정
         cbar = plt.colorbar(scatter)
         cbar.set_label('군집 번호 (Result)')
         
+        plt.tight_layout() # 레이아웃 최적화
         st.pyplot(fig)
         
     except Exception as e:
-        st.error(f"시각화 중 오류가 발생했습니다: {e}")
-        st.write("CSV 컬럼명을 확인해주세요:", df.columns.tolist())
+        st.error(f"시각화 중 오류 발생: {e}")
+        st.write("CSV 컬럼 목록:", df.columns.tolist())
 
 else:
+    # 버튼을 누르기 전 초기 화면 메시지
     st.info("왼쪽 사이드바에서 데이터를 입력한 후 '결과 분석하기'를 눌러주세요.")
-else:
-    st.write("왼쪽 사이드바에서 데이터를 입력하고 버튼을 클릭하세요.")
